@@ -5,6 +5,7 @@ import { RegisterPage } from '../pages/demoWebShop/RegisterPage';
 import { SearchPage } from '../pages/demoWebShop/SearchPage';
 import { WishlistPage } from '../pages/demoWebShop/WishlistPage';
 import { CartPage } from '../pages/demoWebShop/CartPage';
+import { HeaderPage } from '../pages/demoWebShop/HeaderPage';
 
 test(
   'Scenario 5: wishlist to cart validation',
@@ -30,6 +31,9 @@ test(
 
     const cartPage =
       new CartPage(page);
+
+    const headerPage =
+      new HeaderPage(page);
 
     // ============================================
     // STEP 1 - REGISTRATION
@@ -187,5 +191,15 @@ test(
     ).toBe(
       "The coupon code you entered couldn't be applied to your order"
     );
+
+    // ============================================
+    // STEP 8 - LOGOUT VALIDATION
+    // ============================================
+
+    await headerPage.logout();
+
+    await expect(
+      headerPage.loginLink
+    ).toBeVisible();
   }
 );
