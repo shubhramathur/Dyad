@@ -8,6 +8,9 @@ export class CartPage {
     private readonly cartCount: Locator;
     private readonly updateCartButton: Locator;
     private readonly subtotalValue: Locator;
+    private readonly couponInput: Locator;
+    private readonly applyCouponButton: Locator;
+    private readonly couponErrorMessage: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -45,6 +48,22 @@ export class CartPage {
             })
             .locator('td')
             .last();
+
+        this.couponInput = page.locator(
+            'input[name="discountcouponcode"]'
+        );
+
+        this.applyCouponButton = page.getByRole(
+            'button',
+            {
+                name: 'Apply coupon',
+                exact: true
+            }
+        );
+
+        this.couponErrorMessage = page.locator(
+            '.coupon-box .message'
+        );
     }
 
     async verifyProductCount(
@@ -188,6 +207,21 @@ export class CartPage {
             expectedSubtotal,
             2
         );
+    }
+
+    async applyCoupon(couponCode: string): Promise<void> {
+        await this.couponInput.fill(couponCode);
+        await this.applyCouponButton.click();
+    }
+
+    async getCouponErrorMessage(): Promise<string> {
+        await expect(
+            this.couponErrorMessage
+        ).toBeVisible();
+
+        return (
+            await this.couponErrorMessage.innerText()
+        ).trim();
     }
 
     async addFallbackBookToCart(): Promise<void> {

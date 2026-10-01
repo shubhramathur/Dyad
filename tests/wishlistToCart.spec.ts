@@ -167,5 +167,25 @@ test(
 
     await cartPage
       .verifySubtotalCalculation();
+
+    // ============================================
+    // STEP 7 - INVALID COUPON VALIDATION
+    // ============================================
+
+    const invalidCouponCode =
+      'INVALIDCOUPON123';
+
+    await cartPage.applyCoupon(
+      invalidCouponCode
+    );
+
+    const couponErrorMessage =
+      await cartPage.getCouponErrorMessage();
+
+    expect(
+      couponErrorMessage
+    ).toBe(
+      "The coupon code you entered couldn't be applied to your order"
+    );
   }
 );
