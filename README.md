@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Dyad Technologies QA Automation Practical Assessment
 
 ## Current stage
