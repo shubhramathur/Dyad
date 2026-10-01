@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 
 export class AccountsPage {
     private readonly page: Page;
+    private readonly accountRows: Locator;
     private readonly accountNumberLinks: Locator;
     private readonly accountsOverviewLink: Locator;
     private readonly openNewAccountLink: Locator;
@@ -15,6 +16,9 @@ export class AccountsPage {
 
     constructor(page: Page) {
         this.page = page;
+        this.accountRows = page.locator(
+            '#accountTable tbody tr'
+        );
         this.accountNumberLinks = page.locator(
             '#accountTable tbody tr td a'
         );
@@ -86,6 +90,36 @@ export class AccountsPage {
         ).trim();
     }
 
+    async getAccountBalance(
+        accountNumber: string
+    ): Promise<number> {
+        await this.openAccountsOverview();
+
+        const accountRow =
+            this.accountRows.filter({
+                has: this.page.getByRole(
+                    'link',
+                    {
+                        name: accountNumber,
+                        exact: true
+                    }
+                )
+            });
+
+        await expect(
+            accountRow
+        ).toHaveCount(1);
+
+        const balanceText =
+            await accountRow
+                .locator('td:nth-child(2)')
+                .innerText();
+
+        return this.parseCurrency(
+            balanceText
+        );
+    }
+
     async openNewAccount(): Promise<void> {
         await this.openNewAccountLink.click();
 
@@ -135,5 +169,16 @@ export class AccountsPage {
         return (
             await this.newAccountNumber.innerText()
         ).trim();
+    }
+
+    private parseCurrency(
+        value: string
+    ): number {
+        return Number(
+            value.replace(
+                /[^0-9.-]+/g,
+                ''
+            )
+        );
     }
 }

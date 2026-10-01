@@ -6,6 +6,7 @@ import {
     type RegistrationData
 } from '../pages/paraBank/RegisterPage';
 import { AccountsPage } from '../pages/paraBank/AccountsPage';
+import { TransferPage } from '../pages/paraBank/TransferPage';
 
 test(
     'Scenario 6: creates two distinct bank accounts',
@@ -31,6 +32,9 @@ test(
 
         const accountsPage =
             new AccountsPage(page);
+
+        const transferPage =
+            new TransferPage(page);
 
         await registerPage.goto();
         await registerPage.register(user);
@@ -81,6 +85,64 @@ test(
             firstAccountNumber
         ).not.toBe(
             secondAccountNumber
+        );
+
+        const sourceBalanceBefore =
+            await accountsPage.getAccountBalance(
+                firstAccountNumber
+            );
+
+        const destinationBalanceBefore =
+            await accountsPage.getAccountBalance(
+                secondAccountNumber
+            );
+
+        expect(sourceBalanceBefore).toBeGreaterThan(0);
+        expect(destinationBalanceBefore).toBeGreaterThanOrEqual(0);
+
+        console.log(
+            'Source Balance Before:',
+            sourceBalanceBefore
+        );
+
+        console.log(
+            'Destination Balance Before:',
+            destinationBalanceBefore
+        );
+
+        const transferAmount =
+            sourceBalanceBefore > 250
+                ? 250
+                : Number(
+                    (sourceBalanceBefore / 2).toFixed(2)
+                );
+
+        expect(transferAmount).toBeGreaterThan(0);
+        expect(transferAmount).toBeLessThan(
+            sourceBalanceBefore
+        );
+
+        console.log(
+            'Transfer Amount:',
+            transferAmount
+        );
+
+        await transferPage.transferFunds(
+            transferAmount,
+            firstAccountNumber,
+            secondAccountNumber
+        );
+
+        const transferConfirmation =
+            await transferPage
+                .getTransferConfirmationMessage();
+
+        expect(
+            transferConfirmation
+        ).toBe(
+            `$${transferAmount.toFixed(2)} has been ` +
+            `transferred from account #${firstAccountNumber} ` +
+            `to account #${secondAccountNumber}.`
         );
     }
 );
