@@ -2,22 +2,22 @@
 
 ## Current stage
 
-Initial Playwright and TypeScript setup only. The following scenarios are planned
-and have not been implemented:
+The framework setup is complete. Scenario implementation is progressing in small
+steps:
 
-- Scenario 5: Wishlist to Cart Validation (Demo Web Shop).
-- Scenario 6: Multi-Account Fund Transfer Audit (ParaBank).
+- Scenario 5: Wishlist to Cart Validation (Demo Web Shop) — registration only.
+- Scenario 6: Multi-Account Fund Transfer Audit (ParaBank) — not implemented.
 
-There are no automated tests or page objects yet.
+Product search, wishlist, cart, coupon, and logout are not implemented yet.
 
 ## Framework
 
-Node.js runs the project. TypeScript adds type checking. Playwright Test will run
-the browser tests, provide assertions, and generate an HTML report.
+Node.js runs the project. TypeScript adds type checking. Playwright Test runs
+the browser tests, provides assertions, and generates an HTML report.
 
-The final framework will use Page Object Model (POM): page classes will contain
-locators and page actions; test files will describe workflows and assert business
-results. Shared helpers will be added to `utils/` only when needed.
+The framework uses Page Object Model (POM): page classes contain locators and page
+actions; test files describe workflows and assert business results. Shared helpers
+will be added to `utils/` only when needed.
 
 ## Prerequisites and installation
 
@@ -56,28 +56,45 @@ launch Chromium to save a screenshot. The blank screenshot is expected: this
 checks browser startup without visiting either assessment website. It is not a
 scenario test or evidence that either scenario passes.
 
-`npm test` currently reports **No tests found**, because `tests/` is intentionally
-empty apart from its Git placeholder. An HTML test report becomes useful after
-real tests are added.
+## Run only the registration test
+
+```bash
+npx playwright test tests/wishlistToCart.spec.ts --project=chromium --grep "user registration is successful"
+```
+
+The test generates a fresh email and password with Node.js's built-in
+`randomUUID()` on every attempt, including retries. First name (`QA`) and last
+name (`User`) are simple static demo data. Credentials are generated in memory;
+no password is stored in source code.
+
+`RegisterPage.goto()` opens the registration page, and `register(user)` fills the
+required fields and submits the form. The test then uses
+`await expect(registerPage.successMessage).toBeVisible()` to assert the exact
+observed message: **Your registration completed**.
+
+Text fields and the submit button use `getByRole()`. Password inputs use
+`getByLabel()` because password inputs do not have an implicit textbox role. The
+success message is a plain text block and uses `getByText()` with `exact: true`.
+All locators were created after inspecting the live form and result DOM.
 
 ## Project files
 
 | Path | Purpose |
 | --- | --- |
-| `pages/demoWebShop/` | Future page objects for the shop. |
+| `pages/demoWebShop/RegisterPage.ts` | Registration locators, navigation, and form submission. |
 | `pages/paraBank/` | Future page objects for the bank. |
-| `tests/` | Future scenario workflows and business assertions. |
+| `tests/wishlistToCart.spec.ts` | Scenario 5 registration test, runtime data, and success assertion. |
 | `utils/` | Future shared helpers, such as runtime test data and currency parsing. |
-| `.gitkeep` files | Empty placeholders so Git can preserve the four empty folders. |
+| `.gitkeep` files | Placeholders from the initial setup so Git can preserve empty folders; no runtime behavior. |
 | `playwright.config.ts` | Browser, test execution, retries, and reporting settings. |
 | `package.json` | Project metadata, command shortcuts, and three development dependencies. |
 | `package-lock.json` | Exact dependency versions for repeatable installation; commit this file. |
 | `tsconfig.json` | TypeScript checking rules and the files to check. |
 | `.gitignore` | Excludes installed packages, reports, local environment files, and saved login sessions from Git. |
 | `README.md` | Installation, verification, configuration, and usage instructions. |
-| `Dyad_QA_Assignment_Context.md` | Primary assignment requirements. |
 
-`node_modules/` and `test-results/` are generated locally and are ignored by Git.
+`node_modules/`, `test-results/`, and `playwright-report/` are generated locally
+and are ignored by Git.
 
 The three development dependencies are `@playwright/test` (runner, browser tools,
 assertions, and reporters), `typescript` (type checker), and `@types/node` (type
@@ -117,7 +134,7 @@ and web-first assertions without arbitrary sleeps.
 There is no shared `baseURL` because the two planned scenarios use different
 websites. Site navigation will be added with the corresponding page objects.
 
-## Commands for use after tests are added
+## Execution and reports
 
 ```bash
 npm test
@@ -133,19 +150,18 @@ The HTML report links to available failure artifacts.
 ## Assumptions and limitations
 
 - This stage uses Chromium only and one worker to keep setup and execution simple.
-- Neither demo website has been inspected or tested in this stage. Observed site
-  behavior and limitations will be documented during scenario implementation.
+- The Demo Web Shop registration form and successful result were inspected live.
+  Registration succeeded without selecting the optional gender field. The form
+  requires a password of at least six characters; the generated UUID meets that
+  requirement.
+- Successful registration displayed `Your registration completed` at
+  `/registerresult/1`. The assertion checks the observed message, not a guessed
+  URL or log entry.
+- The rest of Scenario 5 and all of Scenario 6 remain unimplemented. No behavior
+  claims are made about those flows.
 - Keep passwords and other secrets out of source files. Use local environment
   variables when needed. Never commit credentials or saved authentication state.
-- Git has not been initialized and no commit has been created in this stage.
-
-Recommended first commit message:
-
-```text
-chore: initialize Playwright TypeScript project
-```
 
 Reference: [Playwright installation](https://playwright.dev/docs/intro),
 [configuration](https://playwright.dev/docs/test-configuration), and
 [TypeScript support](https://playwright.dev/docs/test-typescript).
->>>>>>> c310068 (chore: initialize Playwright TypeScript project)
