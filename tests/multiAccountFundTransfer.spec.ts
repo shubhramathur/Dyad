@@ -144,5 +144,55 @@ test(
             `transferred from account #${firstAccountNumber} ` +
             `to account #${secondAccountNumber}.`
         );
+
+        const expectedSourceBalanceAfter =
+            sourceBalanceBefore - transferAmount;
+
+        const expectedDestinationBalanceAfter =
+            destinationBalanceBefore + transferAmount;
+
+        console.log(
+            'Expected Source Balance After:',
+            expectedSourceBalanceAfter
+        );
+
+        console.log(
+            'Expected Destination Balance After:',
+            expectedDestinationBalanceAfter
+        );
+
+        const sourceBalanceAfter =
+            await accountsPage.getAccountBalance(
+                firstAccountNumber
+            );
+
+        const destinationBalanceAfter =
+            await accountsPage.getAccountBalance(
+                secondAccountNumber
+            );
+
+        console.log(
+            'Actual Source Balance After:',
+            sourceBalanceAfter
+        );
+
+        console.log(
+            'Actual Destination Balance After:',
+            destinationBalanceAfter
+        );
+
+        expect(
+            sourceBalanceAfter
+        ).toBeCloseTo(
+            expectedSourceBalanceAfter,
+            2
+        );
+
+        expect(
+            destinationBalanceAfter
+        ).toBeCloseTo(
+            expectedDestinationBalanceAfter,
+            2
+        );
     }
 );

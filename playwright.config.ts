@@ -19,6 +19,10 @@ export default defineConfig({
   outputDir: 'test-results',
 
   use: {
+    viewport: {
+      width: 1920,
+      height: 1080,
+    },
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
     video: 'retain-on-failure',
@@ -27,7 +31,13 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: {
+          width: 1920,
+          height: 1080,
+        },
+      },
     },
   ],
 });
