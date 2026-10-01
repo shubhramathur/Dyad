@@ -7,6 +7,55 @@ import {
 } from '../pages/paraBank/RegisterPage';
 import { AccountsPage } from '../pages/paraBank/AccountsPage';
 import { TransferPage } from '../pages/paraBank/TransferPage';
+import {
+    AccountDetailsPage,
+    type TransactionRecord
+} from '../pages/paraBank/AccountDetailsPage';
+
+function assertTransactionDateIsCurrent(
+    dateText: string
+): void {
+    const dateParts = /^(\d{2})-(\d{2})-(\d{4})$/.exec(
+        dateText.trim()
+    );
+
+    expect(
+        dateParts,
+        `Expected ParaBank date in MM-dd-yyyy format, received: ${dateText}`
+    ).not.toBeNull();
+
+    const month = Number(dateParts?.[1]);
+    const day = Number(dateParts?.[2]);
+    const year = Number(dateParts?.[3]);
+    const transactionDate = new Date(
+        Date.UTC(year, month - 1, day)
+    );
+
+    expect(
+        transactionDate.getUTCFullYear()
+    ).toBe(year);
+
+    expect(
+        transactionDate.getUTCMonth()
+    ).toBe(month - 1);
+
+    expect(
+        transactionDate.getUTCDate()
+    ).toBe(day);
+
+    const today = new Date();
+    const todayUtc = Date.UTC(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+    );
+
+    const dayDifference = Math.abs(
+        todayUtc - transactionDate.getTime()
+    ) / (24 * 60 * 60 * 1000);
+
+    expect(dayDifference).toBeLessThanOrEqual(1);
+}
 
 test(
     'Scenario 6: creates two distinct bank accounts',
@@ -35,6 +84,9 @@ test(
 
         const transferPage =
             new TransferPage(page);
+
+        const accountDetailsPage =
+            new AccountDetailsPage(page);
 
         await registerPage.goto();
         await registerPage.register(user);
@@ -193,6 +245,118 @@ test(
         ).toBeCloseTo(
             expectedDestinationBalanceAfter,
             2
+        );
+
+        await accountsPage.openAccountDetails(
+            firstAccountNumber
+        );
+
+        await expect(
+            accountDetailsPage.accountNumber
+        ).toHaveText(
+            firstAccountNumber
+        );
+
+        const sourceTransaction =
+            await accountDetailsPage
+                .findTransferTransaction(
+                    transferAmount,
+                    'debit'
+                );
+
+        expect(
+            sourceTransaction
+        ).toBeDefined();
+
+        const sourceRecord =
+            sourceTransaction as TransactionRecord;
+
+        expect(
+            sourceRecord.description
+        ).toBe(
+            'Funds Transfer Sent'
+        );
+
+        expect(
+            sourceRecord.amount
+        ).toBeCloseTo(
+            transferAmount,
+            2
+        );
+
+        assertTransactionDateIsCurrent(
+            sourceRecord.date
+        );
+
+        console.log(
+            'Source Transaction Date:',
+            sourceRecord.date
+        );
+
+        console.log(
+            'Source Transaction Description:',
+            sourceRecord.description
+        );
+
+        console.log(
+            'Source Transaction Amount:',
+            sourceRecord.amount
+        );
+
+        await accountsPage.openAccountDetails(
+            secondAccountNumber
+        );
+
+        await expect(
+            accountDetailsPage.accountNumber
+        ).toHaveText(
+            secondAccountNumber
+        );
+
+        const destinationTransaction =
+            await accountDetailsPage
+                .findTransferTransaction(
+                    transferAmount,
+                    'credit'
+                );
+
+        expect(
+            destinationTransaction
+        ).toBeDefined();
+
+        const destinationRecord =
+            destinationTransaction as TransactionRecord;
+
+        expect(
+            destinationRecord.description
+        ).toBe(
+            'Funds Transfer Received'
+        );
+
+        expect(
+            destinationRecord.amount
+        ).toBeCloseTo(
+            transferAmount,
+            2
+        );
+
+        assertTransactionDateIsCurrent(
+            destinationRecord.date
+        );
+
+        console.log(
+            'Destination Transaction Date:',
+            destinationRecord.date
+        );
+
+        console.log(
+            'Destination Transaction Description:',
+            destinationRecord.description
+        );
+
+        console.log(
+            'Destination Transaction Amount:',
+            destinationRecord.amount
         );
     }
 );

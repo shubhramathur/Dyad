@@ -96,15 +96,7 @@ export class AccountsPage {
         await this.openAccountsOverview();
 
         const accountRow =
-            this.accountRows.filter({
-                has: this.page.getByRole(
-                    'link',
-                    {
-                        name: accountNumber,
-                        exact: true
-                    }
-                )
-            });
+            this.getAccountRow(accountNumber);
 
         await expect(
             accountRow
@@ -118,6 +110,61 @@ export class AccountsPage {
         return this.parseCurrency(
             balanceText
         );
+    }
+
+    async openAccountDetails(
+        accountNumber: string
+    ): Promise<void> {
+        const accountDetailsHeading =
+            this.page.getByRole(
+                'heading',
+                {
+                    name: 'Account Details',
+                    exact: true
+                }
+            );
+        const accountNotFoundMessage =
+            this.page.getByText(
+                `Could not find account # ${accountNumber}`,
+                {
+                    exact: true
+                }
+            );
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+            await this.openAccountsOverview();
+
+            const accountRow =
+                this.getAccountRow(accountNumber);
+
+            await expect(
+                accountRow
+            ).toHaveCount(1);
+
+            await accountRow.getByRole(
+                'link',
+                {
+                    name: accountNumber,
+                    exact: true
+                }
+            ).click();
+
+            await expect(
+                accountDetailsHeading.or(accountNotFoundMessage)
+            ).toBeVisible();
+
+            if (
+                await accountNotFoundMessage.isVisible()
+            ) {
+                continue;
+            }
+
+            return;
+        }
+
+        await expect(
+            accountDetailsHeading
+        ).toBeVisible();
     }
 
     async openNewAccount(): Promise<void> {
@@ -180,5 +227,19 @@ export class AccountsPage {
                 ''
             )
         );
+    }
+
+    private getAccountRow(
+        accountNumber: string
+    ): Locator {
+        return this.accountRows.filter({
+            has: this.page.getByRole(
+                'link',
+                {
+                    name: accountNumber,
+                    exact: true
+                }
+            )
+        });
     }
 }
