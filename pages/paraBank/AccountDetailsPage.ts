@@ -8,6 +8,7 @@ export type TransactionRecord = {
     date: string;
     description: string;
     amount: number;
+    reference?: string;
 };
 
 export class AccountDetailsPage {
@@ -25,15 +26,25 @@ export class AccountDetailsPage {
 
     async findTransferTransaction(
         transferAmount: number,
-        direction: TransactionDirection
+        direction: TransactionDirection,
+        transactionDate?: string
     ): Promise<TransactionRecord | undefined> {
-        await expect(
-            this.accountNumber
-        ).toHaveText(/\d+/);
+        const matchingTransactions =
+            await this.findMatchingTransferTransactions(
+                transferAmount,
+                direction,
+                transactionDate
+            );
 
-        await expect(
-            this.transactionRows
-        ).not.toHaveCount(0);
+        return matchingTransactions[0];
+    }
+
+    async findMatchingTransferTransactions(
+        transferAmount: number,
+        direction: TransactionDirection,
+        transactionDate?: string
+    ): Promise<TransactionRecord[]> {
+        await this.waitForTransactions();
 
         const expectedDescription =
             direction === 'debit'
@@ -47,6 +58,7 @@ export class AccountDetailsPage {
 
         const rowCount =
             await this.transactionRows.count();
+        const matchingTransactions: TransactionRecord[] = [];
 
         for (
             let index = 0;
@@ -76,17 +88,47 @@ export class AccountDetailsPage {
 
             if (
                 description === expectedDescription &&
-                amount === transferAmount
+                amount === transferAmount &&
+                (!transactionDate || date === transactionDate)
             ) {
-                return {
+                matchingTransactions.push({
                     date,
                     description,
-                    amount
-                };
+                    amount,
+                    reference:
+                        await this.getTransactionReference(row)
+                });
             }
         }
 
-        return undefined;
+        return matchingTransactions;
+    }
+
+    async getTransactionReferenceCount(
+        reference: string
+    ): Promise<number> {
+        await this.waitForTransactions();
+
+        const rowCount =
+            await this.transactionRows.count();
+        let referenceCount = 0;
+
+        for (
+            let index = 0;
+            index < rowCount;
+            index++
+        ) {
+            const row =
+                this.transactionRows.nth(index);
+            const rowReference =
+                await this.getTransactionReference(row);
+
+            if (rowReference === reference) {
+                referenceCount++;
+            }
+        }
+
+        return referenceCount;
     }
 
     private parseCurrency(
@@ -98,5 +140,30 @@ export class AccountDetailsPage {
                 ''
             )
         );
+    }
+
+    private async waitForTransactions(): Promise<void> {
+        await expect(
+            this.accountNumber
+        ).toHaveText(/\d+/);
+
+        await expect(
+            this.transactionRows
+        ).not.toHaveCount(0);
+    }
+
+    private async getTransactionReference(
+        row: Locator
+    ): Promise<string | undefined> {
+        const href = await row
+            .locator('td')
+            .nth(1)
+            .locator('a')
+            .getAttribute('href');
+        const referenceMatch = /[?&]id=([^&#]+)/.exec(
+            href ?? ''
+        );
+
+        return referenceMatch?.[1];
     }
 }

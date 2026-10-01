@@ -288,6 +288,32 @@ test(
             sourceRecord.date
         );
 
+        const matchingSourceTransactions =
+            await accountDetailsPage
+                .findMatchingTransferTransactions(
+                    transferAmount,
+                    'debit',
+                    sourceRecord.date
+                );
+
+        expect(
+            matchingSourceTransactions.length
+        ).toBe(1);
+
+        expect(
+            sourceRecord.reference
+        ).toBeTruthy();
+
+        const sourceReference =
+            sourceRecord.reference as string;
+
+        expect(
+            await accountDetailsPage
+                .getTransactionReferenceCount(
+                    sourceReference
+                )
+        ).toBe(1);
+
         console.log(
             'Source Transaction Date:',
             sourceRecord.date
@@ -301,6 +327,16 @@ test(
         console.log(
             'Source Transaction Amount:',
             sourceRecord.amount
+        );
+
+        console.log(
+            'Source matching transaction count:',
+            matchingSourceTransactions.length
+        );
+
+        console.log(
+            'Source transaction reference:',
+            sourceReference
         );
 
         await accountsPage.openAccountDetails(
@@ -344,6 +380,32 @@ test(
             destinationRecord.date
         );
 
+        const matchingDestinationTransactions =
+            await accountDetailsPage
+                .findMatchingTransferTransactions(
+                    transferAmount,
+                    'credit',
+                    destinationRecord.date
+                );
+
+        expect(
+            matchingDestinationTransactions.length
+        ).toBe(1);
+
+        expect(
+            destinationRecord.reference
+        ).toBeTruthy();
+
+        const destinationReference =
+            destinationRecord.reference as string;
+
+        expect(
+            await accountDetailsPage
+                .getTransactionReferenceCount(
+                    destinationReference
+                )
+        ).toBe(1);
+
         console.log(
             'Destination Transaction Date:',
             destinationRecord.date
@@ -357,6 +419,16 @@ test(
         console.log(
             'Destination Transaction Amount:',
             destinationRecord.amount
+        );
+
+        console.log(
+            'Destination matching transaction count:',
+            matchingDestinationTransactions.length
+        );
+
+        console.log(
+            'Destination transaction reference:',
+            destinationReference
         );
     }
 );
