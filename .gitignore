@@ -1,0 +1,18 @@
+# Installed dependencies
+/node_modules/
+
+# Generated reports and browser artifacts
+/playwright-report/
+/test-results/
+
+# Local credentials and saved login sessions
+.env
+.env.*
+!.env.example
+/playwright/.auth/
+
+# Local logs
+*.log
+
+# Local AI context - do not commit
+Dyad_QA_Assignment_Context.md
