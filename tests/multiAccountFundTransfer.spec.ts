@@ -430,5 +430,240 @@ test(
             'Destination transaction reference:',
             destinationReference
         );
+
+        await accountsPage.openAccountsOverview();
+
+        const currentSourceBalance =
+            await accountsPage.getAccountBalance(
+                firstAccountNumber
+            );
+
+        const currentDestinationBalance =
+            await accountsPage.getAccountBalance(
+                secondAccountNumber
+            );
+
+        const overLimitAmount = Number(
+            (currentSourceBalance + 100).toFixed(2)
+        );
+
+        expect(
+            overLimitAmount
+        ).toBeGreaterThan(
+            currentSourceBalance
+        );
+
+        console.log(
+            'Negative Transfer Validation'
+        );
+
+        console.log(
+            'Source Account:',
+            firstAccountNumber
+        );
+
+        console.log(
+            'Destination Account:',
+            secondAccountNumber
+        );
+
+        console.log(
+            'Source Balance Before Invalid Transfer:',
+            currentSourceBalance
+        );
+
+        console.log(
+            'Destination Balance Before Invalid Transfer:',
+            currentDestinationBalance
+        );
+
+        console.log(
+            'Attempted Over-Limit Amount:',
+            overLimitAmount
+        );
+
+        await transferPage.transferFunds(
+            overLimitAmount,
+            firstAccountNumber,
+            secondAccountNumber
+        );
+
+        const overLimitOutcome =
+            await transferPage.getTransferOutcome();
+
+        const sourceBalanceAfterInvalidTransfer =
+            await accountsPage.getAccountBalance(
+                firstAccountNumber
+            );
+
+        const destinationBalanceAfterInvalidTransfer =
+            await accountsPage.getAccountBalance(
+                secondAccountNumber
+            );
+
+        const acceptedSourceBalance =
+            currentSourceBalance - overLimitAmount;
+        const acceptedDestinationBalance =
+            currentDestinationBalance + overLimitAmount;
+
+        const acceptedBalanceState =
+            Math.abs(
+                sourceBalanceAfterInvalidTransfer -
+                acceptedSourceBalance
+            ) < 0.005 &&
+            Math.abs(
+                destinationBalanceAfterInvalidTransfer -
+                acceptedDestinationBalance
+            ) < 0.005;
+
+        const rejectedBalanceState =
+            Math.abs(
+                sourceBalanceAfterInvalidTransfer -
+                currentSourceBalance
+            ) < 0.005 &&
+            Math.abs(
+                destinationBalanceAfterInvalidTransfer -
+                currentDestinationBalance
+            ) < 0.005;
+
+        expect(
+            acceptedBalanceState || rejectedBalanceState
+        ).toBe(true);
+
+        const overLimitAccepted =
+            acceptedBalanceState;
+
+        const applicationResult =
+            overLimitAccepted
+                ? 'Accepted'
+                : 'Rejected';
+
+        console.log(
+            'Application Result:',
+            applicationResult
+        );
+
+        if (
+            overLimitOutcome.successConfirmationVisible
+        ) {
+            expect(
+                overLimitAccepted
+            ).toBe(true);
+
+            expect(
+                overLimitOutcome.message
+            ).toBe(
+                `$${overLimitAmount.toFixed(2)} has been ` +
+                `transferred from account #${firstAccountNumber} ` +
+                `to account #${secondAccountNumber}.`
+            );
+
+            console.log(
+                'Transfer Confirmation:',
+                overLimitOutcome.message
+            );
+        } else if (!overLimitAccepted) {
+            expect(
+                overLimitOutcome.message
+            ).not.toBe('');
+
+            console.log(
+                'Rejection Message:',
+                overLimitOutcome.message
+            );
+        } else {
+            console.log(
+                'Transfer Response:',
+                overLimitOutcome.message
+            );
+        }
+
+        const expectedSourceBalanceAfterInvalidTransfer =
+            overLimitAccepted
+                ? currentSourceBalance - overLimitAmount
+                : currentSourceBalance;
+
+        const expectedDestinationBalanceAfterInvalidTransfer =
+            overLimitAccepted
+                ? currentDestinationBalance + overLimitAmount
+                : currentDestinationBalance;
+
+        console.log(
+            'Source Balance After Attempt:',
+            sourceBalanceAfterInvalidTransfer
+        );
+
+        console.log(
+            'Destination Balance After Attempt:',
+            destinationBalanceAfterInvalidTransfer
+        );
+
+        console.log(
+            'Expected Source Balance:',
+            expectedSourceBalanceAfterInvalidTransfer
+        );
+
+        console.log(
+            'Expected Destination Balance:',
+            expectedDestinationBalanceAfterInvalidTransfer
+        );
+
+        expect(
+            sourceBalanceAfterInvalidTransfer
+        ).toBeCloseTo(
+            expectedSourceBalanceAfterInvalidTransfer,
+            2
+        );
+
+        expect(
+            destinationBalanceAfterInvalidTransfer
+        ).toBeCloseTo(
+            expectedDestinationBalanceAfterInvalidTransfer,
+            2
+        );
+
+        await accountsPage.openAccountDetails(
+            firstAccountNumber
+        );
+
+        const overLimitSourceTransactions =
+            await accountDetailsPage
+                .findMatchingTransferTransactions(
+                    overLimitAmount,
+                    'debit'
+                );
+
+        expect(
+            overLimitSourceTransactions.length
+        ).toBe(
+            overLimitAccepted ? 1 : 0
+        );
+
+        await accountsPage.openAccountDetails(
+            secondAccountNumber
+        );
+
+        const overLimitDestinationTransactions =
+            await accountDetailsPage
+                .findMatchingTransferTransactions(
+                    overLimitAmount,
+                    'credit'
+                );
+
+        expect(
+            overLimitDestinationTransactions.length
+        ).toBe(
+            overLimitAccepted ? 1 : 0
+        );
+
+        console.log(
+            'Over-limit source transaction count:',
+            overLimitSourceTransactions.length
+        );
+
+        console.log(
+            'Over-limit destination transaction count:',
+            overLimitDestinationTransactions.length
+        );
     }
 );

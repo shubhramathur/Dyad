@@ -1,6 +1,11 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
+export type TransferOutcome = {
+    successConfirmationVisible: boolean;
+    message: string;
+};
+
 export class TransferPage {
     private readonly page: Page;
     private readonly transferFundsLink: Locator;
@@ -124,5 +129,34 @@ export class TransferPage {
         return (
             await this.transferConfirmationMessage.innerText()
         ).trim();
+    }
+
+    async getTransferOutcome(): Promise<TransferOutcome> {
+        await this.page.waitForLoadState(
+            'domcontentloaded'
+        );
+
+        if (
+            await this.transferCompleteHeading.isVisible()
+        ) {
+            return {
+                successConfirmationVisible: true,
+                message:
+                    await this.getTransferConfirmationMessage()
+            };
+        }
+
+        const resultMessage = (
+            await this.page
+                .locator('#rightPanel')
+                .innerText()
+        ).trim();
+
+        expect(resultMessage).not.toBe('');
+
+        return {
+            successConfirmationVisible: false,
+            message: resultMessage
+        };
     }
 }
